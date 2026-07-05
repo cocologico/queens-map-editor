@@ -455,7 +455,9 @@ function draw() {
 
   // background
   if (bgImage) {
-    ctx.drawImage(bgImage, 0, 0, W, H);
+    const s = Math.max(W / bgImage.naturalWidth, H / bgImage.naturalHeight);
+    const dw = bgImage.naturalWidth * s, dh = bgImage.naturalHeight * s;
+    ctx.drawImage(bgImage, (W - dw) / 2, (H - dh) / 2, dw, dh);
   } else {
     ctx.fillStyle = '#3a6b1a';
     ctx.fillRect(0, 0, W, H);
