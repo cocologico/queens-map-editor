@@ -720,8 +720,11 @@ function clearCurrent() {
 }
 
 function clearAll() {
-  if (!confirm('Eliminar tot (camino + nivells + assets)?')) return;
+  if (!confirm('Eliminar tot (camino + nivells + assets + imatges)?')) return;
   pathPoints = []; nodePoints = []; decorations = [];
+  assetLibrary = []; selectedAssetIdx = -1;
+  bgImage = null; bgImageDataUrl = null;
+  renderPalette();
   localStorage.removeItem('qme_state');
   updateStatus(); draw();
 }
