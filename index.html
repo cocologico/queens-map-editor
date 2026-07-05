@@ -475,6 +475,24 @@ function draw() {
     ctx.fillText('Carrega una imatge de fons per començar', W/2, H/2);
   }
 
+  // screen boundary guides (every 844px)
+  const SCREEN_H = 844;
+  ctx.save();
+  ctx.setLineDash([12, 8]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = 'bold 13px -apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  for (let y = SCREEN_H; y < H; y += SCREEN_H) {
+    ctx.beginPath();
+    ctx.moveTo(0, y); ctx.lineTo(W, y);
+    ctx.stroke();
+    ctx.fillText(`▲ Pantalla ${Math.round(y / SCREEN_H)}`, 8, y - 4);
+  }
+  ctx.restore();
+
   // road
   const roadPath = catmullRomPath(pathPoints);
   if (roadPath) {
