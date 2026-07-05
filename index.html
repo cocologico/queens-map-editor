@@ -400,18 +400,25 @@ canvas.addEventListener('mouseup', e => {
   const pos = canvasPos(e);
 
   if (dragging) {
+    const wasClick = !dragMoved;
+    const hit = { ...dragging };
     dragging = null;
-    canvas.style.cursor = 'grab';
-    if (dragMoved) { updateStatus(); draw(); return; }
+    canvas.style.cursor = 'crosshair';
+    if (!wasClick) { updateStatus(); draw(); return; }
+    // click (no drag) on existing point
+    if (hit.type === 'nodes') {
+      nodePoints.splice(hit.index, 1);
+      updateStatus(); draw();
+    }
+    // click on path point → do nothing (avoid duplicate)
+    return;
   }
 
-  // treat as plain click (add / remove)
+  // clicked on empty space → add new point
   if (mode === 'path') {
     pathPoints.push({ x: pos.x, y: pos.y });
   } else {
-    const idx = nodePoints.findIndex(n => Math.hypot(n.x - pos.x, n.y - pos.y) < nodeRadius + 6);
-    if (idx >= 0) nodePoints.splice(idx, 1);
-    else nodePoints.push({ x: pos.x, y: pos.y });
+    nodePoints.push({ x: pos.x, y: pos.y });
   }
   updateStatus();
   draw();
