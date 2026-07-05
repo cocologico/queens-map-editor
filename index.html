@@ -418,16 +418,37 @@ function loadJSON(e) {
       const data = JSON.parse(evt.target.result);
       if (data.path)  pathPoints = data.path.map(p => ({ x: p.x * W, y: p.y * H }));
       if (data.nodes) nodePoints = data.nodes.map(p => ({ x: p.x * W, y: p.y * H }));
-      // decorations: positions restored but images need reloading manually
-      if (data.decorations) {
-        decorations = data.decorations.map(d => ({
-          libIdx: -1, name: d.asset,
-          x: d.x * W, y: d.y * H,
-          w: d.w * W, h: d.h * H
-        }));
+
+      const restoreDecos = () => {
+        if (data.decorations) {
+          decorations = data.decorations.map(d => ({
+            libIdx: d.libIdx ?? -1, name: d.asset,
+            x: d.x * W, y: d.y * H,
+            w: d.w * W, h: d.h * H
+          }));
+        }
+        saveToLocal(); updateStatus(); draw();
+      };
+
+      // restore background image
+      if (data.bgImage) {
+        bgImageDataUrl = data.bgImage;
+        dataUrlToImg(data.bgImage, img => { bgImage = img; draw(); });
       }
-      saveToLocal();
-      updateStatus(); draw();
+
+      // restore asset library
+      if (data.assetLibrary?.length) {
+        assetLibrary = data.assetLibrary.map(a => ({ img: null, dataUrl: a.dataUrl, name: a.name }));
+        let loaded = 0;
+        assetLibrary.forEach(a => {
+          dataUrlToImg(a.dataUrl, img => {
+            a.img = img;
+            if (++loaded === assetLibrary.length) { renderPalette(); restoreDecos(); }
+          });
+        });
+      } else {
+        restoreDecos();
+      }
     } catch(err) { alert('Error llegint el JSON: ' + err.message); }
   };
   reader.readAsText(file);
@@ -761,10 +782,13 @@ function updateStatus() {
 function buildJSON() {
   return JSON.stringify({
     imageSize: { width: W, height: H },
+    bgImage: bgImageDataUrl || null,
+    assetLibrary: assetLibrary.map(a => ({ name: a.name, dataUrl: a.dataUrl })),
     path:  pathPoints.map(p => ({ x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
     nodes: nodePoints.map((p, i) => ({ index: i + 1, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
     decorations: decorations.map(d => ({
-      asset: assetLibrary[d.libIdx]?.name ?? '',
+      asset: assetLibrary[d.libIdx]?.name ?? d.name ?? '',
+      libIdx: d.libIdx,
       x: +(d.x / W).toFixed(4),
       y: +(d.y / H).toFixed(4),
       w: +(d.w / W).toFixed(4),
