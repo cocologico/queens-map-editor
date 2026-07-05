@@ -257,6 +257,13 @@
   </div>
 
   <div class="ctrl-group">
+    <span>Pantalles</span>
+    <input type="range" id="numScreens" min="1" max="8" value="1" step="1"
+      oninput="setNumScreens(+this.value)">
+    <span id="numScreensVal">1</span>
+  </div>
+
+  <div class="ctrl-group">
     <span>Zoom</span>
     <input type="range" id="zoom" min="20" max="200" value="100" step="5" oninput="setZoom(+this.value)">
     <span id="zoomVal">100</span>%
@@ -377,6 +384,21 @@ window.addEventListener('load', () => {
   updateStatus();
   draw();
 });
+
+const SCREEN_H = 844;
+
+function setNumScreens(n) {
+  document.getElementById('numScreensVal').textContent = n;
+  initCanvas(W, SCREEN_H * n);
+  const wrap = document.getElementById('wrap');
+  const fitPct = Math.min(
+    Math.floor((wrap.clientWidth - 32) / W * 100),
+    Math.floor((wrap.clientHeight - 32) / (SCREEN_H * n) * 100),
+    100
+  );
+  document.getElementById('zoom').value = fitPct;
+  setZoom(fitPct);
+}
 
 function setZoom(pct) {
   scale = pct / 100;
@@ -631,18 +653,26 @@ function draw() {
     ctx.fillText('Carrega una imatge de fons per començar', W / 2, H / 2);
   }
 
-  // screen boundary guides (every 844px)
+  // screen viewport rectangles
   ctx.save();
-  ctx.setLineDash([12, 8]);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = 'bold 13px -apple-system,sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  for (let y = 844; y < H; y += 844) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    ctx.fillText(`▲ Pantalla ${Math.round(y / 844)}`, 8, y - 4);
+  ctx.font = 'bold 12px -apple-system,sans-serif';
+  ctx.textBaseline = 'top';
+  for (let i = 0; i < Math.round(H / SCREEN_H); i++) {
+    const y = i * SCREEN_H;
+    // alternate tint to distinguish screens
+    if (i % 2 === 1) {
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fillRect(0, y, W, SCREEN_H);
+    }
+    // border
+    ctx.strokeStyle = i === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = i === 0 ? 2 : 1.5;
+    ctx.setLineDash(i === 0 ? [] : [10, 6]);
+    ctx.strokeRect(1, y + 1, W - 2, SCREEN_H - 2);
+    // label
+    ctx.fillStyle = i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)';
+    ctx.textAlign = 'right';
+    ctx.fillText(i === 0 ? 'Pantalla 1 (inici)' : `Pantalla ${i + 1}`, W - 8, y + 8);
   }
   ctx.restore();
 
