@@ -317,6 +317,16 @@ function loadImage(e) {
   img.onload = () => {
     bgImage = img;
     initCanvas(img.naturalWidth, img.naturalHeight);
+    // auto-fit zoom so canvas fills the visible area
+    const wrap = document.getElementById('wrap');
+    const fitPct = Math.min(
+      Math.floor((wrap.clientWidth  - 32) / img.naturalWidth  * 100),
+      Math.floor((wrap.clientHeight - 32) / img.naturalHeight * 100),
+      100
+    );
+    const zoomEl = document.getElementById('zoom');
+    zoomEl.value = fitPct;
+    setZoom(fitPct);
   };
   img.src = url;
 }
