@@ -28,14 +28,7 @@
     flex-wrap: wrap;
     flex-shrink: 0;
   }
-
-  #toolbar h1 {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    margin-right: 4px;
-  }
-
+  #toolbar h1 { font-size: 14px; font-weight: 600; color: #fff; margin-right: 4px; }
   .sep { width: 1px; height: 24px; background: #444; margin: 0 4px; }
 
   .btn {
@@ -66,6 +59,7 @@
     white-space: nowrap;
   }
   label.btn-label:hover { background: #444; }
+  label.btn-label.block { display: block; text-align: center; width: 100%; }
 
   .ctrl-group {
     display: flex;
@@ -74,8 +68,58 @@
     font-size: 13px;
     color: #aaa;
   }
-
   input[type=range] { width: 80px; accent-color: #4caf50; }
+
+  /* ── Main layout ── */
+  #main { flex: 1; display: flex; overflow: hidden; }
+
+  /* ── Asset palette panel ── */
+  #assetPanel {
+    background: #2a2a2a;
+    border-right: 1px solid #444;
+    width: 154px;
+    flex-shrink: 0;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #assetPanel.open { display: flex; }
+  #assetPanel .ap-header { padding: 10px; border-bottom: 1px solid #444; flex-shrink: 0; }
+  #assetGrid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-content: flex-start;
+  }
+  .asset-thumb {
+    width: 64px;
+    height: 64px;
+    border: 2px solid #555;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .asset-thumb img { max-width: 100%; max-height: 46px; object-fit: contain; }
+  .asset-thumb .at-name {
+    font-size: 9px;
+    color: #aaa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    text-align: center;
+    padding: 0 3px;
+  }
+  .asset-thumb:hover { border-color: #888; }
+  .asset-thumb.selected { border-color: #4caf50; background: #1a2e1a; }
 
   /* ── Canvas area ── */
   #wrap {
@@ -86,67 +130,9 @@
     justify-content: center;
     background: #111;
   }
+  canvas { display: block; cursor: crosshair; image-rendering: pixelated; }
 
-  canvas {
-    display: block;
-    cursor: crosshair;
-    image-rendering: pixelated;
-  }
-
-  /* ── Status bar ── */
-  #status {
-    padding: 6px 14px;
-    background: #2a2a2a;
-    border-top: 1px solid #444;
-    font-size: 12px;
-    color: #888;
-    display: flex;
-    gap: 20px;
-    flex-shrink: 0;
-  }
-
-  /* ── Output panel ── */
-  #outputPanel {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.75);
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-  }
-  #outputPanel.open { display: flex; }
-
-  #outputBox {
-    background: #1e1e1e;
-    border: 1px solid #555;
-    border-radius: 10px;
-    padding: 20px;
-    width: min(640px, 95vw);
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  #outputBox h2 { font-size: 15px; color: #fff; }
-
-  #outputBox textarea {
-    flex: 1;
-    min-height: 300px;
-    background: #111;
-    border: 1px solid #444;
-    border-radius: 6px;
-    color: #a8ff78;
-    font-family: 'Menlo', 'Consolas', monospace;
-    font-size: 12px;
-    padding: 12px;
-    resize: vertical;
-  }
-
-  #outputBox .row { display: flex; gap: 8px; justify-content: flex-end; }
-
-  /* ── Instructions panel ── */
+  /* ── Help panel ── */
   #helpPanel {
     background: #2a2a2a;
     border-left: 1px solid #444;
@@ -164,15 +150,58 @@
   #helpPanel .tip { margin-bottom: 10px; }
   #helpPanel .tip strong { color: #81c784; }
   #helpPanel kbd {
-    background: #444;
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-size: 11px;
-    color: #ddd;
+    background: #444; border-radius: 3px;
+    padding: 1px 5px; font-size: 11px; color: #ddd;
   }
 
-  /* ── Main layout ── */
-  #main { flex: 1; display: flex; overflow: hidden; }
+  /* ── Status bar ── */
+  #status {
+    padding: 6px 14px;
+    background: #2a2a2a;
+    border-top: 1px solid #444;
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ── Output modal ── */
+  #outputPanel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  #outputPanel.open { display: flex; }
+  #outputBox {
+    background: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 20px;
+    width: min(640px, 95vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #outputBox h2 { font-size: 15px; color: #fff; }
+  #outputBox textarea {
+    flex: 1;
+    min-height: 300px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #a8ff78;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    padding: 12px;
+    resize: vertical;
+  }
+  #outputBox .row { display: flex; gap: 8px; justify-content: flex-end; }
 </style>
 </head>
 <body>
@@ -181,8 +210,9 @@
   <h1>Map Editor</h1>
   <div class="sep"></div>
 
-  <button class="btn active" id="btnPath" onclick="setMode('path')">✏️ Camino</button>
-  <button class="btn" id="btnNodes" onclick="setMode('nodes')">📍 Nivells</button>
+  <button class="btn active" id="btnPath"   onclick="setMode('path')">✏️ Camino</button>
+  <button class="btn"        id="btnNodes"  onclick="setMode('nodes')">📍 Nivells</button>
+  <button class="btn"        id="btnAssets" onclick="setMode('assets')">🌲 Assets</button>
 
   <div class="sep"></div>
 
@@ -199,8 +229,16 @@
 
   <div class="ctrl-group">
     <span>Radio</span>
-    <input type="range" id="nodeSize" min="8" max="48" value="22" step="1" oninput="nodeRadius=+this.value;document.getElementById('nodeSizeVal').textContent=this.value;draw()">
+    <input type="range" id="nodeSize" min="8" max="48" value="22" step="1"
+      oninput="nodeRadius=+this.value;document.getElementById('nodeSizeVal').textContent=this.value;draw()">
     <span id="nodeSizeVal">22</span>px
+  </div>
+
+  <div class="ctrl-group" id="assetSizeGroup" style="display:none">
+    <span>Mida</span>
+    <input type="range" id="assetSz" min="20" max="200" value="80" step="4"
+      oninput="assetSize=+this.value;document.getElementById('assetSzVal').textContent=this.value">
+    <span id="assetSzVal">80</span>px
   </div>
 
   <div class="ctrl-group">
@@ -212,42 +250,48 @@
   <div class="sep"></div>
 
   <button class="btn" onclick="toggleHelp()">❓ Ajuda</button>
-  <button class="btn active" onclick="exportData()" style="background:#1565c0;border-color:#1976d2">⬇ Exportar JSON</button>
+  <button class="btn" onclick="exportData()" style="background:#1565c0;border-color:#1976d2;color:#fff">⬇ Exportar JSON</button>
 </div>
 
 <div id="main">
+
+  <!-- Asset palette (left) -->
+  <div id="assetPanel">
+    <div class="ap-header">
+      <label class="btn-label block" for="assetInput">+ Afegir asset</label>
+      <input type="file" id="assetInput" multiple accept="image/*" style="display:none" onchange="loadAssets(event)">
+    </div>
+    <div id="assetGrid"></div>
+  </div>
+
+  <!-- Canvas -->
   <div id="wrap">
     <canvas id="c"></canvas>
   </div>
 
+  <!-- Help panel (right) -->
   <div id="helpPanel">
     <h3>Com usar-ho</h3>
     <div class="tip">
-      <strong>Mode Camino:</strong><br>
-      Click per afegir punts de control.<br>
-      El camí es genera automàticament amb corbes suaus (Catmull-Rom).
+      <strong>Camino <kbd>P</kbd>:</strong><br>
+      Click per afegir punts de control. Drag per moure'ls.
     </div>
     <div class="tip">
-      <strong>Mode Nivells:</strong><br>
-      Click per afegir un node.<br>
-      Click sobre un node existent per eliminar-lo.
+      <strong>Nivells <kbd>N</kbd>:</strong><br>
+      Click per afegir. Click sobre un node per eliminar-lo. Drag per moure.
     </div>
     <div class="tip">
-      <strong>Ràtio:</strong><br>
-      Les coordenades s'exporten normalitzades (0.0–1.0) relatives a la imatge. Flutter les escala automàticament.
+      <strong>Assets <kbd>A</kbd>:</strong><br>
+      Carrega imatges PNG. Selecciona un a la paleta i click al mapa per col·locar-lo. Drag per moure. Click per eliminar.
+    </div>
+    <div class="tip">
+      <strong>Coordenades:</strong><br>
+      S'exporten normalitzades (0.0–1.0). Flutter les escala automàticament.
     </div>
     <div class="tip">
       <strong>Dreceres:</strong><br>
-      <kbd>P</kbd> Camino &nbsp; <kbd>N</kbd> Nivells<br>
+      <kbd>P</kbd> Camino &nbsp; <kbd>N</kbd> Nivells &nbsp; <kbd>A</kbd> Assets<br>
       <kbd>Z</kbd> Desfer &nbsp; <kbd>Esc</kbd> Tancar
-    </div>
-    <div class="tip">
-      <strong>Flux:</strong><br>
-      1. Carrega la imatge de fons<br>
-      2. Dibuixa el camí<br>
-      3. Col·loca els nivells<br>
-      4. Exporta el JSON<br>
-      5. Envia'l al dev
     </div>
   </div>
 </div>
@@ -256,6 +300,7 @@
   <span id="stMode">Mode: Camino</span>
   <span id="stPath">Camino: 0 punts</span>
   <span id="stNodes">Nivells: 0</span>
+  <span id="stDecos">Assets: 0</span>
   <span id="stCoords"></span>
 </div>
 
@@ -277,8 +322,12 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
 let mode = 'path';
-let pathPoints = [];
-let nodePoints = [];
+let pathPoints  = [];
+let nodePoints  = [];
+let assetLibrary = [];  // [{img, name}]
+let decorations  = [];  // [{libIdx, x, y, w, h}]
+let selectedAssetIdx = -1;
+let assetSize = 80;
 let bgImage = null;
 let W = 390, H = 844;
 let nodeRadius = 22;
@@ -296,7 +345,6 @@ function initCanvas(w, h) {
 
 initCanvas(390, 844);
 
-// auto-fit initial canvas to viewport
 window.addEventListener('load', () => {
   const wrap = document.getElementById('wrap');
   const fitPct = Math.min(
@@ -304,8 +352,7 @@ window.addEventListener('load', () => {
     Math.floor((wrap.clientHeight - 32) / H * 100),
     100
   );
-  const zoomEl = document.getElementById('zoom');
-  zoomEl.value = fitPct;
+  document.getElementById('zoom').value = fitPct;
   setZoom(fitPct);
 });
 
@@ -320,34 +367,59 @@ function applyZoom(s) {
   canvas.style.height = (H * s) + 'px';
 }
 
-// ── Image load ────────────────────────────────────────────────────────────────
+// ── Image / asset load ────────────────────────────────────────────────────────
 
 function loadImage(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const url = URL.createObjectURL(file);
   const img = new Image();
-  img.onload = () => {
-    bgImage = img;
-    draw(); // redraw with image scaled to current canvas size
-  };
-  img.src = url;
+  img.onload = () => { bgImage = img; draw(); };
+  img.src = URL.createObjectURL(file);
+}
+
+function loadAssets(e) {
+  Array.from(e.target.files).forEach(file => {
+    const img = new Image();
+    img.onload = () => { assetLibrary.push({ img, name: file.name }); renderPalette(); };
+    img.src = URL.createObjectURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderPalette() {
+  const grid = document.getElementById('assetGrid');
+  grid.innerHTML = '';
+  assetLibrary.forEach((a, i) => {
+    const div = document.createElement('div');
+    div.className = 'asset-thumb' + (i === selectedAssetIdx ? ' selected' : '');
+    div.onclick = () => { selectedAssetIdx = i; renderPalette(); };
+    const img = document.createElement('img');
+    img.src = a.img.src;
+    const name = document.createElement('div');
+    name.className = 'at-name';
+    name.textContent = a.name.replace(/\.[^.]+$/, '');
+    div.append(img, name);
+    grid.appendChild(div);
+  });
 }
 
 // ── Mode ──────────────────────────────────────────────────────────────────────
 
 function setMode(m) {
   mode = m;
-  document.getElementById('btnPath').classList.toggle('active', m === 'path');
-  document.getElementById('btnNodes').classList.toggle('active', m === 'nodes');
-  document.getElementById('stMode').textContent = 'Mode: ' + (m === 'path' ? 'Camino' : 'Nivells');
+  document.getElementById('btnPath').classList.toggle('active',   m === 'path');
+  document.getElementById('btnNodes').classList.toggle('active',  m === 'nodes');
+  document.getElementById('btnAssets').classList.toggle('active', m === 'assets');
+  document.getElementById('assetPanel').classList.toggle('open',  m === 'assets');
+  document.getElementById('assetSizeGroup').style.display = m === 'assets' ? 'flex' : 'none';
+  const labels = { path: 'Camino', nodes: 'Nivells', assets: 'Assets' };
+  document.getElementById('stMode').textContent = 'Mode: ' + labels[m];
 }
 
 // ── Click + drag handling ─────────────────────────────────────────────────────
 
-let dragging = null;   // { type: 'path'|'nodes', index }
+let dragging = null;
 let dragMoved = false;
-let mouseDownPos = null;
 
 function canvasPos(e) {
   const r = canvas.getBoundingClientRect();
@@ -355,47 +427,51 @@ function canvasPos(e) {
 }
 
 function hitTest(pos) {
-  // returns { type, index } of the point under the cursor, or null
   const HIT = 12;
   if (mode === 'path') {
     const idx = pathPoints.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < HIT);
     if (idx >= 0) return { type: 'path', index: idx };
-  } else {
+  } else if (mode === 'nodes') {
     const idx = nodePoints.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < nodeRadius + 6);
     if (idx >= 0) return { type: 'nodes', index: idx };
+  } else if (mode === 'assets') {
+    for (let i = decorations.length - 1; i >= 0; i--) {
+      const d = decorations[i];
+      if (pos.x >= d.x - d.w / 2 && pos.x <= d.x + d.w / 2 &&
+          pos.y >= d.y - d.h / 2 && pos.y <= d.y + d.h / 2) {
+        return { type: 'assets', index: i };
+      }
+    }
   }
   return null;
 }
 
 canvas.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
-  const pos = canvasPos(e);
-  mouseDownPos = pos;
   dragMoved = false;
-  const hit = hitTest(pos);
-  if (hit) {
-    dragging = hit;
-    canvas.style.cursor = 'grabbing';
-  }
+  const hit = hitTest(canvasPos(e));
+  if (hit) { dragging = hit; canvas.style.cursor = 'grabbing'; }
 });
 
 canvas.addEventListener('mousemove', e => {
   const pos = canvasPos(e);
-  document.getElementById('stCoords').textContent =
-    `x:${Math.round(pos.x)} y:${Math.round(pos.y)}`;
+  document.getElementById('stCoords').textContent = `x:${Math.round(pos.x)} y:${Math.round(pos.y)}`;
 
   if (dragging) {
     dragMoved = true;
-    const arr = dragging.type === 'path' ? pathPoints : nodePoints;
-    arr[dragging.index].x = pos.x;
-    arr[dragging.index].y = pos.y;
+    if (dragging.type === 'assets') {
+      decorations[dragging.index].x = pos.x;
+      decorations[dragging.index].y = pos.y;
+    } else {
+      const arr = dragging.type === 'path' ? pathPoints : nodePoints;
+      arr[dragging.index].x = pos.x;
+      arr[dragging.index].y = pos.y;
+    }
     draw();
     return;
   }
 
-  // cursor hint
-  const hit = hitTest(pos);
-  canvas.style.cursor = hit ? 'grab' : 'crosshair';
+  canvas.style.cursor = hitTest(pos) ? 'grab' : 'crosshair';
 });
 
 canvas.addEventListener('mouseup', e => {
@@ -408,20 +484,22 @@ canvas.addEventListener('mouseup', e => {
     dragging = null;
     canvas.style.cursor = 'crosshair';
     if (!wasClick) { updateStatus(); draw(); return; }
-    // click (no drag) on existing point
-    if (hit.type === 'nodes') {
-      nodePoints.splice(hit.index, 1);
-      updateStatus(); draw();
-    }
-    // click on path point → do nothing (avoid duplicate)
+    // click (no drag) on existing element → delete
+    if (hit.type === 'nodes')  { nodePoints.splice(hit.index, 1); updateStatus(); draw(); }
+    if (hit.type === 'assets') { decorations.splice(hit.index, 1); updateStatus(); draw(); }
     return;
   }
 
-  // clicked on empty space → add new point
+  // clicked on empty space → add
   if (mode === 'path') {
     pathPoints.push({ x: pos.x, y: pos.y });
-  } else {
+  } else if (mode === 'nodes') {
     nodePoints.push({ x: pos.x, y: pos.y });
+  } else if (mode === 'assets') {
+    if (selectedAssetIdx < 0) return;
+    const lib = assetLibrary[selectedAssetIdx];
+    const ratio = lib.img.naturalHeight / lib.img.naturalWidth;
+    decorations.push({ libIdx: selectedAssetIdx, x: pos.x, y: pos.y, w: assetSize, h: assetSize * ratio });
   }
   updateStatus();
   draw();
@@ -441,11 +519,11 @@ function catmullRomPath(pts) {
     const p1 = pts[i];
     const p2 = pts[i + 1];
     const p3 = pts[Math.min(n - 1, i + 2)];
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-    path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    path.bezierCurveTo(
+      p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6,
+      p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6,
+      p2.x, p2.y
+    );
   }
   return path;
 }
@@ -464,11 +542,10 @@ function draw() {
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Carrega una imatge de fons per començar', W/2, H/2);
+    ctx.fillText('Carrega una imatge de fons per començar', W / 2, H / 2);
   }
 
   // screen boundary guides (every 844px)
-  const SCREEN_H = 844;
   ctx.save();
   ctx.setLineDash([12, 8]);
   ctx.lineWidth = 2;
@@ -477,25 +554,34 @@ function draw() {
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
-  for (let y = SCREEN_H; y < H; y += SCREEN_H) {
-    ctx.beginPath();
-    ctx.moveTo(0, y); ctx.lineTo(W, y);
-    ctx.stroke();
-    ctx.fillText(`▲ Pantalla ${Math.round(y / SCREEN_H)}`, 8, y - 4);
+  for (let y = 844; y < H; y += 844) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.fillText(`▲ Pantalla ${Math.round(y / 844)}`, 8, y - 4);
   }
   ctx.restore();
+
+  // decorations (behind road)
+  decorations.forEach(d => {
+    const lib = assetLibrary[d.libIdx];
+    if (!lib) return;
+    if (mode === 'assets') {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(76,175,80,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(d.x - d.w / 2, d.y - d.h / 2, d.w, d.h);
+      ctx.restore();
+    }
+    ctx.drawImage(lib.img, d.x - d.w / 2, d.y - d.h / 2, d.w, d.h);
+  });
 
   // road
   const roadPath = catmullRomPath(pathPoints);
   if (roadPath) {
-    ctx.lineWidth = 28;
-    ctx.strokeStyle = 'rgba(109,76,65,0.85)';
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineWidth = 28; ctx.strokeStyle = 'rgba(109,76,65,0.85)';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.stroke(roadPath);
-
-    ctx.lineWidth = 18;
-    ctx.strokeStyle = '#E8D5A3';
+    ctx.lineWidth = 18; ctx.strokeStyle = '#E8D5A3';
     ctx.stroke(roadPath);
   }
 
@@ -505,33 +591,23 @@ function draw() {
     ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
     ctx.fillStyle = i === pathPoints.length - 1 ? '#ffeb3b' : '#fff';
     ctx.fill();
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.stroke();
   });
 
-  // nodes
+  // level nodes
   nodePoints.forEach((p, i) => {
-    // shadow
     ctx.beginPath();
     ctx.arc(p.x + 2, p.y + 3, nodeRadius + 3, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fill();
-    // border ring
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
     ctx.beginPath();
     ctx.arc(p.x, p.y, nodeRadius + 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#2e7d32';
-    ctx.fill();
-    // white fill
+    ctx.fillStyle = '#2e7d32'; ctx.fill();
     ctx.beginPath();
     ctx.arc(p.x, p.y, nodeRadius, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    // number
+    ctx.fillStyle = '#fff'; ctx.fill();
     ctx.fillStyle = '#2e7d32';
     ctx.font = `bold ${Math.round(nodeRadius * 0.85)}px -apple-system,sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(i + 1, p.x, p.y);
   });
 }
@@ -539,26 +615,24 @@ function draw() {
 // ── Edit actions ──────────────────────────────────────────────────────────────
 
 function undoLast() {
-  if (mode === 'path') pathPoints.pop();
-  else nodePoints.pop();
-  updateStatus();
-  draw();
+  if (mode === 'path')   pathPoints.pop();
+  else if (mode === 'nodes')  nodePoints.pop();
+  else decorations.pop();
+  updateStatus(); draw();
 }
 
 function clearCurrent() {
   if (!confirm('Netejar el mode actual?')) return;
-  if (mode === 'path') pathPoints = [];
-  else nodePoints = [];
-  updateStatus();
-  draw();
+  if (mode === 'path')   pathPoints = [];
+  else if (mode === 'nodes')  nodePoints = [];
+  else decorations = [];
+  updateStatus(); draw();
 }
 
 function clearAll() {
-  if (!confirm('Eliminar tot (camino + nivells)?')) return;
-  pathPoints = [];
-  nodePoints = [];
-  updateStatus();
-  draw();
+  if (!confirm('Eliminar tot (camino + nivells + assets)?')) return;
+  pathPoints = []; nodePoints = []; decorations = [];
+  updateStatus(); draw();
 }
 
 // ── Status ────────────────────────────────────────────────────────────────────
@@ -566,6 +640,7 @@ function clearAll() {
 function updateStatus() {
   document.getElementById('stPath').textContent  = `Camino: ${pathPoints.length} punts`;
   document.getElementById('stNodes').textContent = `Nivells: ${nodePoints.length}`;
+  document.getElementById('stDecos').textContent = `Assets: ${decorations.length}`;
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
@@ -574,7 +649,14 @@ function buildJSON() {
   return JSON.stringify({
     imageSize: { width: W, height: H },
     path:  pathPoints.map(p => ({ x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
-    nodes: nodePoints.map((p, i) => ({ index: i + 1, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) }))
+    nodes: nodePoints.map((p, i) => ({ index: i + 1, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
+    decorations: decorations.map(d => ({
+      asset: assetLibrary[d.libIdx]?.name ?? '',
+      x: +(d.x / W).toFixed(4),
+      y: +(d.y / H).toFixed(4),
+      w: +(d.w / W).toFixed(4),
+      h: +(d.h / H).toFixed(4)
+    }))
   }, null, 2);
 }
 
@@ -583,9 +665,7 @@ function exportData() {
   document.getElementById('outputPanel').classList.add('open');
 }
 
-function closeOutput() {
-  document.getElementById('outputPanel').classList.remove('open');
-}
+function closeOutput() { document.getElementById('outputPanel').classList.remove('open'); }
 
 function copyJSON() {
   navigator.clipboard.writeText(document.getElementById('outputText').value)
@@ -602,9 +682,7 @@ function downloadJSON() {
 
 // ── Help ──────────────────────────────────────────────────────────────────────
 
-function toggleHelp() {
-  document.getElementById('helpPanel').classList.toggle('open');
-}
+function toggleHelp() { document.getElementById('helpPanel').classList.toggle('open'); }
 
 // ── Keyboard shortcuts ────────────────────────────────────────────────────────
 
@@ -612,6 +690,7 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'TEXTAREA') return;
   if (e.key === 'p' || e.key === 'P') setMode('path');
   if (e.key === 'n' || e.key === 'N') setMode('nodes');
+  if (e.key === 'a' || e.key === 'A') setMode('assets');
   if (e.key === 'z' || e.key === 'Z') undoLast();
   if (e.key === 'Escape') closeOutput();
 });
