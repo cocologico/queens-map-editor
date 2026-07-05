@@ -329,17 +329,7 @@ function loadImage(e) {
   const img = new Image();
   img.onload = () => {
     bgImage = img;
-    initCanvas(img.naturalWidth, img.naturalHeight);
-    // auto-fit zoom so canvas fills the visible area
-    const wrap = document.getElementById('wrap');
-    const fitPct = Math.min(
-      Math.floor((wrap.clientWidth  - 32) / img.naturalWidth  * 100),
-      Math.floor((wrap.clientHeight - 32) / img.naturalHeight * 100),
-      100
-    );
-    const zoomEl = document.getElementById('zoom');
-    zoomEl.value = fitPct;
-    setZoom(fitPct);
+    draw(); // redraw with image scaled to current canvas size
   };
   img.src = url;
 }
@@ -465,7 +455,7 @@ function draw() {
 
   // background
   if (bgImage) {
-    ctx.drawImage(bgImage, 0, 0);
+    ctx.drawImage(bgImage, 0, 0, W, H);
   } else {
     ctx.fillStyle = '#3a6b1a';
     ctx.fillRect(0, 0, W, H);
