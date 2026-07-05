@@ -216,8 +216,11 @@
 
   <div class="sep"></div>
 
-  <label class="btn-label" for="imgInput">📂 Carregar imatge</label>
+  <label class="btn-label" for="imgInput">📂 Imatge</label>
   <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="loadImage(event)">
+
+  <label class="btn-label" for="jsonInput">📂 JSON</label>
+  <input type="file" id="jsonInput" accept=".json,application/json" style="display:none" onchange="loadJSON(event)">
 
   <div class="sep"></div>
 
@@ -244,9 +247,9 @@
   <div class="ctrl-group">
     <span>Camino</span>
     <input type="color" id="roadColor" value="#E8D5A3"
-      oninput="roadColor=this.value;draw()" title="Color del camino">
+      oninput="roadColor=this.value;saveToLocal();draw()" title="Color del camino">
     <input type="range" id="roadWidth" min="4" max="60" value="18" step="2"
-      oninput="roadWidth=+this.value;document.getElementById('roadWidthVal').textContent=this.value;draw()">
+      oninput="roadWidth=+this.value;document.getElementById('roadWidthVal').textContent=this.value;saveToLocal();draw()">
     <span id="roadWidthVal">18</span>px
   </div>
 
@@ -357,6 +360,7 @@ function initCanvas(w, h) {
 initCanvas(390, 844);
 
 window.addEventListener('load', () => {
+  loadFromLocal();
   const wrap = document.getElementById('wrap');
   const fitPct = Math.min(
     Math.floor((wrap.clientWidth  - 32) / W * 100),
@@ -365,6 +369,8 @@ window.addEventListener('load', () => {
   );
   document.getElementById('zoom').value = fitPct;
   setZoom(fitPct);
+  updateStatus();
+  draw();
 });
 
 function setZoom(pct) {
@@ -386,6 +392,31 @@ function loadImage(e) {
   const img = new Image();
   img.onload = () => { bgImage = img; draw(); };
   img.src = URL.createObjectURL(file);
+}
+
+function loadJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (data.path)  pathPoints = data.path.map(p => ({ x: p.x * W, y: p.y * H }));
+      if (data.nodes) nodePoints = data.nodes.map(p => ({ x: p.x * W, y: p.y * H }));
+      // decorations: positions restored but images need reloading manually
+      if (data.decorations) {
+        decorations = data.decorations.map(d => ({
+          libIdx: -1, name: d.asset,
+          x: d.x * W, y: d.y * H,
+          w: d.w * W, h: d.h * H
+        }));
+      }
+      saveToLocal();
+      updateStatus(); draw();
+    } catch(err) { alert('Error llegint el JSON: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 }
 
 function loadAssets(e) {
@@ -643,7 +674,40 @@ function clearCurrent() {
 function clearAll() {
   if (!confirm('Eliminar tot (camino + nivells + assets)?')) return;
   pathPoints = []; nodePoints = []; decorations = [];
+  localStorage.removeItem('qme_state');
   updateStatus(); draw();
+}
+
+// ── LocalStorage persistence ──────────────────────────────────────────────────
+
+function saveToLocal() {
+  try {
+    localStorage.setItem('qme_state', JSON.stringify({
+      pathPoints, nodePoints,
+      decorations: decorations.map(d => ({ ...d })),
+      roadColor, roadWidth
+    }));
+  } catch(_) {}
+}
+
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem('qme_state');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    pathPoints   = data.pathPoints   || [];
+    nodePoints   = data.nodePoints   || [];
+    decorations  = data.decorations  || [];
+    if (data.roadColor) {
+      roadColor = data.roadColor;
+      document.getElementById('roadColor').value = roadColor;
+    }
+    if (data.roadWidth) {
+      roadWidth = data.roadWidth;
+      document.getElementById('roadWidth').value = roadWidth;
+      document.getElementById('roadWidthVal').textContent = roadWidth;
+    }
+  } catch(_) {}
 }
 
 // ── Status ────────────────────────────────────────────────────────────────────
@@ -652,6 +716,7 @@ function updateStatus() {
   document.getElementById('stPath').textContent  = `Camino: ${pathPoints.length} punts`;
   document.getElementById('stNodes').textContent = `Nivells: ${nodePoints.length}`;
   document.getElementById('stDecos').textContent = `Assets: ${decorations.length}`;
+  saveToLocal();
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
