@@ -262,7 +262,8 @@
   <div class="sep"></div>
 
   <button class="btn" onclick="toggleHelp()">❓ Ajuda</button>
-  <button class="btn" onclick="exportData()" style="background:#1565c0;border-color:#1976d2;color:#fff">⬇ Exportar JSON</button>
+  <button class="btn" onclick="saveSession()" style="background:#6a1b9a;border-color:#8e24aa;color:#fff">💾 Guardar sessió</button>
+  <button class="btn" onclick="exportFlutter()" style="background:#1565c0;border-color:#1976d2;color:#fff">⬇ Exportar Flutter</button>
 </div>
 
 <div id="main">
@@ -779,8 +780,9 @@ function updateStatus() {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-function buildJSON() {
+function buildSessionJSON() {
   return JSON.stringify({
+    _type: 'session',
     imageSize: { width: W, height: H },
     bgImage: bgImageDataUrl || null,
     assetLibrary: assetLibrary.map(a => ({ name: a.name, dataUrl: a.dataUrl })),
@@ -789,16 +791,34 @@ function buildJSON() {
     decorations: decorations.map(d => ({
       asset: assetLibrary[d.libIdx]?.name ?? d.name ?? '',
       libIdx: d.libIdx,
-      x: +(d.x / W).toFixed(4),
-      y: +(d.y / H).toFixed(4),
-      w: +(d.w / W).toFixed(4),
-      h: +(d.h / H).toFixed(4)
+      x: +(d.x / W).toFixed(4), y: +(d.y / H).toFixed(4),
+      w: +(d.w / W).toFixed(4), h: +(d.h / H).toFixed(4)
     }))
   }, null, 2);
 }
 
-function exportData() {
-  document.getElementById('outputText').value = buildJSON();
+function buildFlutterJSON() {
+  return JSON.stringify({
+    path:  pathPoints.map(p => ({ x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
+    nodes: nodePoints.map((p, i) => ({ index: i + 1, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
+    decorations: decorations.map(d => ({
+      asset: assetLibrary[d.libIdx]?.name ?? d.name ?? '',
+      x: +(d.x / W).toFixed(4), y: +(d.y / H).toFixed(4),
+      w: +(d.w / W).toFixed(4), h: +(d.h / H).toFixed(4)
+    }))
+  }, null, 2);
+}
+
+function saveSession() {
+  const blob = new Blob([buildSessionJSON()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'session.json';
+  a.click();
+}
+
+function exportFlutter() {
+  document.getElementById('outputText').value = buildFlutterJSON();
   document.getElementById('outputPanel').classList.add('open');
 }
 
