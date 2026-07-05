@@ -384,7 +384,15 @@ window.addEventListener('load', () => {
   setZoom(fitPct);
   updateStatus();
   draw();
+  scrollToBottom();
 });
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    const wrap = document.getElementById('wrap');
+    wrap.scrollTop = wrap.scrollHeight;
+  });
+}
 
 function setNumScreens(n) {
   document.getElementById('numScreensVal').textContent = n;
@@ -393,6 +401,7 @@ function setNumScreens(n) {
   canvas.height = H;
   applyZoom(scale);
   draw();
+  scrollToBottom();
 }
 
 function setZoom(pct) {
@@ -648,26 +657,26 @@ function draw() {
     ctx.fillText('Carrega una imatge de fons per començar', W / 2, H / 2);
   }
 
-  // screen viewport rectangles
+  // screen viewport rectangles (numbered bottom-to-top: 1 = bottom = start)
   ctx.save();
   ctx.font = 'bold 12px -apple-system,sans-serif';
   ctx.textBaseline = 'top';
-  for (let i = 0; i < Math.round(H / SCREEN_H); i++) {
+  const numSections = Math.round(H / SCREEN_H);
+  for (let i = 0; i < numSections; i++) {
     const y = i * SCREEN_H;
-    // alternate tint to distinguish screens
+    const screenNum = numSections - i; // 1 = bottom
+    const isStart = screenNum === 1;
     if (i % 2 === 1) {
       ctx.fillStyle = 'rgba(0,0,0,0.08)';
       ctx.fillRect(0, y, W, SCREEN_H);
     }
-    // border
-    ctx.strokeStyle = i === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = i === 0 ? 2 : 1.5;
-    ctx.setLineDash(i === 0 ? [] : [10, 6]);
+    ctx.strokeStyle = isStart ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = isStart ? 2 : 1.5;
+    ctx.setLineDash(isStart ? [] : [10, 6]);
     ctx.strokeRect(1, y + 1, W - 2, SCREEN_H - 2);
-    // label
-    ctx.fillStyle = i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)';
+    ctx.fillStyle = isStart ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)';
     ctx.textAlign = 'right';
-    ctx.fillText(i === 0 ? 'Pantalla 1 (inici)' : `Pantalla ${i + 1}`, W - 8, y + 8);
+    ctx.fillText(isStart ? 'Pantalla 1 (inici)' : `Pantalla ${screenNum}`, W - 8, y + 8);
   }
   ctx.restore();
 
