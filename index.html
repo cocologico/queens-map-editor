@@ -389,15 +389,11 @@ const SCREEN_H = 844;
 
 function setNumScreens(n) {
   document.getElementById('numScreensVal').textContent = n;
-  initCanvas(W, SCREEN_H * n);
-  const wrap = document.getElementById('wrap');
-  const fitPct = Math.min(
-    Math.floor((wrap.clientWidth - 32) / W * 100),
-    Math.floor((wrap.clientHeight - 32) / (SCREEN_H * n) * 100),
-    100
-  );
-  document.getElementById('zoom').value = fitPct;
-  setZoom(fitPct);
+  H = SCREEN_H * n;
+  canvas.width  = W;
+  canvas.height = H;
+  applyZoom(scale);
+  draw();
 }
 
 function setZoom(pct) {
