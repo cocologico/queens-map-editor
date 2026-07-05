@@ -340,30 +340,84 @@ function setMode(m) {
   document.getElementById('stMode').textContent = 'Mode: ' + (m === 'path' ? 'Camino' : 'Nivells');
 }
 
-// ── Click handling ────────────────────────────────────────────────────────────
+// ── Click + drag handling ─────────────────────────────────────────────────────
 
-canvas.addEventListener('click', e => {
+let dragging = null;   // { type: 'path'|'nodes', index }
+let dragMoved = false;
+let mouseDownPos = null;
+
+function canvasPos(e) {
   const r = canvas.getBoundingClientRect();
-  const x = (e.clientX - r.left) / scale;
-  const y = (e.clientY - r.top)  / scale;
+  return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale };
+}
 
+function hitTest(pos) {
+  // returns { type, index } of the point under the cursor, or null
+  const HIT = 12;
   if (mode === 'path') {
-    pathPoints.push({ x, y });
+    const idx = pathPoints.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < HIT);
+    if (idx >= 0) return { type: 'path', index: idx };
   } else {
-    const idx = nodePoints.findIndex(n => Math.hypot(n.x - x, n.y - y) < nodeRadius + 6);
+    const idx = nodePoints.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < nodeRadius + 6);
+    if (idx >= 0) return { type: 'nodes', index: idx };
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  const pos = canvasPos(e);
+  mouseDownPos = pos;
+  dragMoved = false;
+  const hit = hitTest(pos);
+  if (hit) {
+    dragging = hit;
+    canvas.style.cursor = 'grabbing';
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  const pos = canvasPos(e);
+  document.getElementById('stCoords').textContent =
+    `x:${Math.round(pos.x)} y:${Math.round(pos.y)}`;
+
+  if (dragging) {
+    dragMoved = true;
+    const arr = dragging.type === 'path' ? pathPoints : nodePoints;
+    arr[dragging.index].x = pos.x;
+    arr[dragging.index].y = pos.y;
+    draw();
+    return;
+  }
+
+  // cursor hint
+  const hit = hitTest(pos);
+  canvas.style.cursor = hit ? 'grab' : 'crosshair';
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (e.button !== 0) return;
+  const pos = canvasPos(e);
+
+  if (dragging) {
+    dragging = null;
+    canvas.style.cursor = 'grab';
+    if (dragMoved) { updateStatus(); draw(); return; }
+  }
+
+  // treat as plain click (add / remove)
+  if (mode === 'path') {
+    pathPoints.push({ x: pos.x, y: pos.y });
+  } else {
+    const idx = nodePoints.findIndex(n => Math.hypot(n.x - pos.x, n.y - pos.y) < nodeRadius + 6);
     if (idx >= 0) nodePoints.splice(idx, 1);
-    else nodePoints.push({ x, y });
+    else nodePoints.push({ x: pos.x, y: pos.y });
   }
   updateStatus();
   draw();
 });
 
-canvas.addEventListener('mousemove', e => {
-  const r = canvas.getBoundingClientRect();
-  const x = Math.round((e.clientX - r.left) / scale);
-  const y = Math.round((e.clientY - r.top)  / scale);
-  document.getElementById('stCoords').textContent = `x:${x} y:${y}`;
-});
+canvas.addEventListener('mouseleave', () => { dragging = null; });
 
 // ── Draw ──────────────────────────────────────────────────────────────────────
 
