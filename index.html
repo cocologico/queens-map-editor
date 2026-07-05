@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queens Game — Map Editor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1a1a;
+    color: #eee;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Toolbar ── */
+  #toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #2a2a2a;
+    border-bottom: 1px solid #444;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  #toolbar h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-right: 4px;
+  }
+
+  .sep { width: 1px; height: 24px; background: #444; margin: 0 4px; }
+
+  .btn {
+    padding: 6px 13px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #333;
+    color: #eee;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #444; }
+  .btn.active { background: #2e7d32; border-color: #4caf50; color: #fff; }
+  .btn.danger { border-color: #c62828; color: #ef9a9a; }
+  .btn.danger:hover { background: #3b1010; }
+
+  label.btn-label {
+    padding: 6px 13px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #333;
+    color: #eee;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  label.btn-label:hover { background: #444; }
+
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #aaa;
+  }
+
+  input[type=range] { width: 80px; accent-color: #4caf50; }
+
+  /* ── Canvas area ── */
+  #wrap {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    background: #111;
+  }
+
+  canvas {
+    display: block;
+    cursor: crosshair;
+    image-rendering: pixelated;
+  }
+
+  /* ── Status bar ── */
+  #status {
+    padding: 6px 14px;
+    background: #2a2a2a;
+    border-top: 1px solid #444;
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ── Output panel ── */
+  #outputPanel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  #outputPanel.open { display: flex; }
+
+  #outputBox {
+    background: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 20px;
+    width: min(640px, 95vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #outputBox h2 { font-size: 15px; color: #fff; }
+
+  #outputBox textarea {
+    flex: 1;
+    min-height: 300px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #a8ff78;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    padding: 12px;
+    resize: vertical;
+  }
+
+  #outputBox .row { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ── Instructions panel ── */
+  #helpPanel {
+    background: #2a2a2a;
+    border-left: 1px solid #444;
+    width: 220px;
+    flex-shrink: 0;
+    padding: 14px;
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.7;
+    overflow-y: auto;
+    display: none;
+  }
+  #helpPanel.open { display: block; }
+  #helpPanel h3 { color: #eee; font-size: 13px; margin-bottom: 8px; }
+  #helpPanel .tip { margin-bottom: 10px; }
+  #helpPanel .tip strong { color: #81c784; }
+  #helpPanel kbd {
+    background: #444;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    color: #ddd;
+  }
+
+  /* ── Main layout ── */
+  #main { flex: 1; display: flex; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>Map Editor</h1>
+  <div class="sep"></div>
+
+  <button class="btn active" id="btnPath" onclick="setMode('path')">✏️ Camino</button>
+  <button class="btn" id="btnNodes" onclick="setMode('nodes')">📍 Nivells</button>
+
+  <div class="sep"></div>
+
+  <label class="btn-label" for="imgInput">📂 Carregar imatge</label>
+  <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="loadImage(event)">
+
+  <div class="sep"></div>
+
+  <button class="btn" onclick="undoLast()">↩ Desfer</button>
+  <button class="btn danger" onclick="clearCurrent()">🗑 Netejar mode</button>
+  <button class="btn danger" onclick="clearAll()">🗑 Tot</button>
+
+  <div class="sep"></div>
+
+  <div class="ctrl-group">
+    <span>Radio</span>
+    <input type="range" id="nodeSize" min="8" max="48" value="22" step="1" oninput="nodeRadius=+this.value;document.getElementById('nodeSizeVal').textContent=this.value;draw()">
+    <span id="nodeSizeVal">22</span>px
+  </div>
+
+  <div class="ctrl-group">
+    <span>Zoom</span>
+    <input type="range" id="zoom" min="20" max="200" value="100" step="5" oninput="setZoom(+this.value)">
+    <span id="zoomVal">100</span>%
+  </div>
+
+  <div class="sep"></div>
+
+  <button class="btn" onclick="toggleHelp()">❓ Ajuda</button>
+  <button class="btn active" onclick="exportData()" style="background:#1565c0;border-color:#1976d2">⬇ Exportar JSON</button>
+</div>
+
+<div id="main">
+  <div id="wrap">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div id="helpPanel">
+    <h3>Com usar-ho</h3>
+    <div class="tip">
+      <strong>Mode Camino:</strong><br>
+      Click per afegir punts de control.<br>
+      El camí es genera automàticament amb corbes suaus (Catmull-Rom).
+    </div>
+    <div class="tip">
+      <strong>Mode Nivells:</strong><br>
+      Click per afegir un node.<br>
+      Click sobre un node existent per eliminar-lo.
+    </div>
+    <div class="tip">
+      <strong>Ràtio:</strong><br>
+      Les coordenades s'exporten normalitzades (0.0–1.0) relatives a la imatge. Flutter les escala automàticament.
+    </div>
+    <div class="tip">
+      <strong>Dreceres:</strong><br>
+      <kbd>P</kbd> Camino &nbsp; <kbd>N</kbd> Nivells<br>
+      <kbd>Z</kbd> Desfer &nbsp; <kbd>Esc</kbd> Tancar
+    </div>
+    <div class="tip">
+      <strong>Flux:</strong><br>
+      1. Carrega la imatge de fons<br>
+      2. Dibuixa el camí<br>
+      3. Col·loca els nivells<br>
+      4. Exporta el JSON<br>
+      5. Envia'l al dev
+    </div>
+  </div>
+</div>
+
+<div id="status">
+  <span id="stMode">Mode: Camino</span>
+  <span id="stPath">Camino: 0 punts</span>
+  <span id="stNodes">Nivells: 0</span>
+  <span id="stCoords"></span>
+</div>
+
+<!-- Output modal -->
+<div id="outputPanel">
+  <div id="outputBox">
+    <h2>JSON exportat — copia i envia al dev</h2>
+    <textarea id="outputText" readonly></textarea>
+    <div class="row">
+      <button class="btn" onclick="copyJSON()">📋 Copiar</button>
+      <button class="btn" onclick="downloadJSON()">💾 Descarregar .json</button>
+      <button class="btn" onclick="closeOutput()">Tancar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let mode = 'path';
+let pathPoints = [];
+let nodePoints = [];
+let bgImage = null;
+let W = 390, H = 844;
+let nodeRadius = 22;
+let scale = 1;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+function initCanvas(w, h) {
+  W = w; H = h;
+  canvas.width = w;
+  canvas.height = h;
+  applyZoom(scale);
+  draw();
+}
+
+initCanvas(390, 844);
+
+function setZoom(pct) {
+  scale = pct / 100;
+  document.getElementById('zoomVal').textContent = pct;
+  applyZoom(scale);
+}
+
+function applyZoom(s) {
+  canvas.style.width  = (W * s) + 'px';
+  canvas.style.height = (H * s) + 'px';
+}
+
+// ── Image load ────────────────────────────────────────────────────────────────
+
+function loadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    bgImage = img;
+    initCanvas(img.naturalWidth, img.naturalHeight);
+  };
+  img.src = url;
+}
+
+// ── Mode ──────────────────────────────────────────────────────────────────────
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnPath').classList.toggle('active', m === 'path');
+  document.getElementById('btnNodes').classList.toggle('active', m === 'nodes');
+  document.getElementById('stMode').textContent = 'Mode: ' + (m === 'path' ? 'Camino' : 'Nivells');
+}
+
+// ── Click handling ────────────────────────────────────────────────────────────
+
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) / scale;
+  const y = (e.clientY - r.top)  / scale;
+
+  if (mode === 'path') {
+    pathPoints.push({ x, y });
+  } else {
+    const idx = nodePoints.findIndex(n => Math.hypot(n.x - x, n.y - y) < nodeRadius + 6);
+    if (idx >= 0) nodePoints.splice(idx, 1);
+    else nodePoints.push({ x, y });
+  }
+  updateStatus();
+  draw();
+});
+
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  const x = Math.round((e.clientX - r.left) / scale);
+  const y = Math.round((e.clientY - r.top)  / scale);
+  document.getElementById('stCoords').textContent = `x:${x} y:${y}`;
+});
+
+// ── Draw ──────────────────────────────────────────────────────────────────────
+
+function catmullRomPath(pts) {
+  if (pts.length < 2) return null;
+  const path = new Path2D();
+  path.moveTo(pts[0].x, pts[0].y);
+  const n = pts.length;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(n - 1, i + 2)];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+  }
+  return path;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // background
+  if (bgImage) {
+    ctx.drawImage(bgImage, 0, 0);
+  } else {
+    ctx.fillStyle = '#3a6b1a';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Carrega una imatge de fons per començar', W/2, H/2);
+  }
+
+  // road
+  const roadPath = catmullRomPath(pathPoints);
+  if (roadPath) {
+    ctx.lineWidth = 28;
+    ctx.strokeStyle = 'rgba(109,76,65,0.85)';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke(roadPath);
+
+    ctx.lineWidth = 18;
+    ctx.strokeStyle = '#E8D5A3';
+    ctx.stroke(roadPath);
+  }
+
+  // path control dots
+  pathPoints.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = i === pathPoints.length - 1 ? '#ffeb3b' : '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // nodes
+  nodePoints.forEach((p, i) => {
+    // shadow
+    ctx.beginPath();
+    ctx.arc(p.x + 2, p.y + 3, nodeRadius + 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fill();
+    // border ring
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, nodeRadius + 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#2e7d32';
+    ctx.fill();
+    // white fill
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, nodeRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    // number
+    ctx.fillStyle = '#2e7d32';
+    ctx.font = `bold ${Math.round(nodeRadius * 0.85)}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i + 1, p.x, p.y);
+  });
+}
+
+// ── Edit actions ──────────────────────────────────────────────────────────────
+
+function undoLast() {
+  if (mode === 'path') pathPoints.pop();
+  else nodePoints.pop();
+  updateStatus();
+  draw();
+}
+
+function clearCurrent() {
+  if (!confirm('Netejar el mode actual?')) return;
+  if (mode === 'path') pathPoints = [];
+  else nodePoints = [];
+  updateStatus();
+  draw();
+}
+
+function clearAll() {
+  if (!confirm('Eliminar tot (camino + nivells)?')) return;
+  pathPoints = [];
+  nodePoints = [];
+  updateStatus();
+  draw();
+}
+
+// ── Status ────────────────────────────────────────────────────────────────────
+
+function updateStatus() {
+  document.getElementById('stPath').textContent  = `Camino: ${pathPoints.length} punts`;
+  document.getElementById('stNodes').textContent = `Nivells: ${nodePoints.length}`;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+function buildJSON() {
+  return JSON.stringify({
+    imageSize: { width: W, height: H },
+    path:  pathPoints.map(p => ({ x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) })),
+    nodes: nodePoints.map((p, i) => ({ index: i + 1, x: +(p.x / W).toFixed(4), y: +(p.y / H).toFixed(4) }))
+  }, null, 2);
+}
+
+function exportData() {
+  document.getElementById('outputText').value = buildJSON();
+  document.getElementById('outputPanel').classList.add('open');
+}
+
+function closeOutput() {
+  document.getElementById('outputPanel').classList.remove('open');
+}
+
+function copyJSON() {
+  navigator.clipboard.writeText(document.getElementById('outputText').value)
+    .then(() => alert('JSON copiat al portapapers!'));
+}
+
+function downloadJSON() {
+  const blob = new Blob([document.getElementById('outputText').value], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'campaign-map.json';
+  a.click();
+}
+
+// ── Help ──────────────────────────────────────────────────────────────────────
+
+function toggleHelp() {
+  document.getElementById('helpPanel').classList.toggle('open');
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'p' || e.key === 'P') setMode('path');
+  if (e.key === 'n' || e.key === 'N') setMode('nodes');
+  if (e.key === 'z' || e.key === 'Z') undoLast();
+  if (e.key === 'Escape') closeOutput();
+});
+</script>
+</body>
+</html>
