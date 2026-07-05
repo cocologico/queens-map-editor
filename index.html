@@ -296,6 +296,19 @@ function initCanvas(w, h) {
 
 initCanvas(390, 844);
 
+// auto-fit initial canvas to viewport
+window.addEventListener('load', () => {
+  const wrap = document.getElementById('wrap');
+  const fitPct = Math.min(
+    Math.floor((wrap.clientWidth  - 32) / W * 100),
+    Math.floor((wrap.clientHeight - 32) / H * 100),
+    100
+  );
+  const zoomEl = document.getElementById('zoom');
+  zoomEl.value = fitPct;
+  setZoom(fitPct);
+});
+
 function setZoom(pct) {
   scale = pct / 100;
   document.getElementById('zoomVal').textContent = pct;
