@@ -396,7 +396,13 @@ function scrollToBottom() {
 
 function setNumScreens(n) {
   document.getElementById('numScreensVal').textContent = n;
+  const delta = SCREEN_H * n - H;
   H = SCREEN_H * n;
+  if (delta !== 0) {
+    pathPoints.forEach(p => { p.y = Math.max(0, Math.min(H - 1, p.y + delta)); });
+    nodePoints.forEach(p => { p.y = Math.max(0, Math.min(H - 1, p.y + delta)); });
+    decorations.forEach(d => { d.y = Math.max(0, Math.min(H - 1, d.y + delta)); });
+  }
   canvas.width  = W;
   canvas.height = H;
   applyZoom(scale);
