@@ -355,7 +355,8 @@ let roadColor = '#E8D5A3';
 let roadWidth = 18;
 let bgImage = null;
 let bgImageDataUrl = null;
-let W = 390, H = 844;
+const SCREEN_H = 844;
+let W = 390, H = SCREEN_H;
 let nodeRadius = 22;
 let scale = 1;
 
@@ -384,8 +385,6 @@ window.addEventListener('load', () => {
   updateStatus();
   draw();
 });
-
-const SCREEN_H = 844;
 
 function setNumScreens(n) {
   document.getElementById('numScreensVal').textContent = n;
